@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -15,12 +16,18 @@ type Config struct {
 	Cmds           []CmdConfig `json:"cmds" yaml:"cmds"`
 }
 
+type PathArgs struct {
+	Name        string
+	PlaceHolder string
+}
+
 type CmdConfig struct {
-	Path    string            `json:"path" yaml:"path"`
-	Cmd     []string          `json:"cmd" yaml:"cmd"`
-	Cwd     string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
-	Envs    map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
-	EnvFile string            `json:"env_file,omitempty" yaml:"env_file,omitempty"`
+	Path     string            `json:"path" yaml:"path"`
+	Cmd      []string          `json:"cmd" yaml:"cmd"`
+	Cwd      string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
+	Envs     map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
+	EnvFile  string            `json:"env_file,omitempty" yaml:"env_file,omitempty"`
+	PathArgs []PathArgs
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -32,21 +39,45 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	defer f.Close()
 
-	conf := Config{}
+	conf := &Config{}
 
 	if ext == ".json" {
-		if err := json.NewDecoder(f).Decode(&conf); err != nil {
+		if err := json.NewDecoder(f).Decode(conf); err != nil {
 			return nil, fmt.Errorf("failed to decode json: %w", err)
 		}
 	} else if ext == ".yaml" || ext == ".yml" {
-		if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
+		if err := yaml.NewDecoder(f).Decode(conf); err != nil {
 			return nil, fmt.Errorf("failed to decode yaml: %w", err)
 		}
 	} else {
 		return nil, fmt.Errorf("unrecognized extension: %s", ext)
 	}
 
-	return &conf, nil
+	conf.parsePathArgs()
+
+	return conf, nil
+}
+
+func (c *Config) parsePathArgs() {
+	re, err := regexp.Compile(`\{([^}]+)\}`)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for i := range c.Cmds {
+		cmd := &c.Cmds[i]
+
+		matches := re.FindAllStringSubmatch(cmd.Path, -1)
+		for _, match := range matches {
+			cmd.PathArgs = append(
+				cmd.PathArgs,
+				PathArgs{
+					Name:        match[1],
+					PlaceHolder: match[0],
+				},
+			)
+		}
+	}
 }
 
 func (c *Config) Validate() error {

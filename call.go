@@ -28,7 +28,6 @@ func buildEnv(cmd *CmdConfig) ([]string, error) {
 	}
 
 	if cmd.EnvFile != "" {
-
 		f, err := os.Open(cmd.EnvFile)
 		if err != nil {
 			return nil, fmt.Errorf("cannot open env file: %w", err)
@@ -81,6 +80,37 @@ func buildCwd(cmd *CmdConfig) (string, error) {
 	return cmd.Cwd, nil
 }
 
+func replaceStringsWithPathValue(req *http.Request, cmd *CmdConfig, targets []string) []string {
+	if len(cmd.PathArgs) == 0 || len(targets) == 0 {
+		return targets
+	}
+
+	results := make([]string, len(targets))
+	copy(results, targets)
+
+	for _, arg := range cmd.PathArgs {
+		value := req.PathValue(arg.Name)
+		for i := range results {
+			results[i] = strings.Replace(results[i], arg.PlaceHolder, value, -1)
+		}
+	}
+
+	return results
+}
+
+func replaceStringWithPathValue(req *http.Request, cmd *CmdConfig, target string) string {
+	if len(cmd.PathArgs) == 0 || len(target) == 0 {
+		return target
+	}
+
+	for _, arg := range cmd.PathArgs {
+		value := req.PathValue(arg.Name)
+		target = strings.Replace(target, arg.PlaceHolder, value, -1)
+	}
+
+	return target
+}
+
 func (s *Server) ServeCall(res http.ResponseWriter, req *http.Request, cmd *CmdConfig) {
 	no := atomic.AddUint64(&s.count, 1)
 	log.Printf("[%8d]Request: %s", no, req.URL.Path)
@@ -106,6 +136,7 @@ func (s *Server) ServeCall(res http.ResponseWriter, req *http.Request, cmd *CmdC
 		fmt.Fprint(res, "error occured with start command\r\n")
 		return
 	}
+	env = replaceStringsWithPathValue(req, cmd, env)
 
 	cwd, err := buildCwd(cmd)
 	if err != nil {
@@ -114,8 +145,11 @@ func (s *Server) ServeCall(res http.ResponseWriter, req *http.Request, cmd *CmdC
 		fmt.Fprintf(res, "error occured with start command: %v\r\n", err)
 		return
 	}
+	cwd = replaceStringWithPathValue(req, cmd, cwd)
 
-	rawCmd := exec.Command(cmd.Cmd[0], cmd.Cmd[1:]...)
+	realCmd := replaceStringsWithPathValue(req, cmd, cmd.Cmd)
+
+	rawCmd := exec.Command(realCmd[0], realCmd[1:]...)
 	rawCmd.Env = env
 	rawCmd.Dir = cwd
 	stdout, _ := rawCmd.StdoutPipe()

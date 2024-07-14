@@ -57,7 +57,6 @@ func main() {
 		fmt.Println("Exit by signal")
 		os.Exit(1)
 	case ErrTaskComplete:
-		fmt.Println("Exit by complete")
 		os.Exit(0)
 	}
 }
