@@ -14,8 +14,8 @@ jobs:
         goos: [linux, windows, darwin]
         goarch: [amd64, arm64]
         include:
-          goos: linux
-          goarch: risv64
+          - goos: linux
+            goarch: risv64
     steps:
       - uses: actions/checkout@v3
       - uses: wangyoucao577/go-release-action@v1
