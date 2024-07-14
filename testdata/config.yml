@@ -1,0 +1,33 @@
+max_concurrency: 10
+cmds:
+  - path: /call1
+    cwd: .
+    cmd:
+      - go
+      - run
+      - ./testdata/call/main.go
+      - call1
+    env_file: "./testdata/call1.env"
+  - path: /call2
+    cmd:
+      - go
+      - run
+      - ./call/main.go
+      - call2
+    cwd: ./testdata
+    envs:
+      ENV_VAR: env_var_vall2
+  - path: /{id}/call3
+    cmd:
+      - go
+      - run
+      - ./call/main.go
+      - call3-{id}
+    cwd: ./testdata
+    envs:
+      ENV_VAR: env_var_vall2
+  - path: /env
+    cmd:
+      - /usr/bin/env
+    envs:
+      ENV_VAR: env_var_vall2
