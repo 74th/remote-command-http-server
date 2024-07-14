@@ -15,7 +15,7 @@ jobs:
         goarch: [amd64, arm64]
         include:
           - goos: linux
-            goarch: risv64
+            goarch: riscv64
     steps:
       - uses: actions/checkout@v3
       - uses: wangyoucao577/go-release-action@v1
