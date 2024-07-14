@@ -58,3 +58,11 @@ cmds:
     envs:
       ENV_VAR: env_var_vall2
 ```
+
+## install
+
+[Download from release page https://github.com/74th/remote-command-http-server/releases/latest](https://github.com/74th/remote-command-http-server/releases/latest)
+
+```
+go install github.com/74th/remote-command-http-server@latest
+```
