@@ -1,8 +1,9 @@
-# http経由でコマンドを単純に実行するサーバ
+# Server to simply execute commands via http
 
-YAML に書いたコマンドを、HTTP経由で実行するサーバです。コマンドの標準出力、標準エラー出力を、リアルタイムに返却します。
+This server executes commands written in YAML via HTTP. The stdout and stderr of the command are writen in real time.
 
-コマンドを送信する環境と、実行する環境を分けたい場合に利用する。
+Use this when you want to separate the environment in which commands are sent and the environment in which they are executed.
+
 
 ```
 command-server ./config.yaml -p 8080
@@ -11,6 +12,14 @@ command-server ./config.yaml -p 8080
 ```
 curl --no-buffer http://command-server-host:8080/call1
 ```
+
+### 🇯🇵
+
+http経由でコマンドを単純に実行するサーバ
+
+YAML に書いたコマンドを、HTTP経由で実行するサーバです。コマンドの標準出力、標準エラー出力を、リアルタイムに返却します。
+
+コマンドを送信する環境と、実行する環境を分けたい場合に利用する。
 
 ## config
 
